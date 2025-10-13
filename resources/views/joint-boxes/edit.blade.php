@@ -27,7 +27,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" 
+                            <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
                                    value="{{ old('name', $jointBox->name) }}" required>
                             @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -35,7 +35,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Code</label>
-                            <input type="text" name="code" class="form-control @error('code') is-invalid @enderror" 
+                            <input type="text" name="code" class="form-control @error('code') is-invalid @enderror"
                                    value="{{ old('code', $jointBox->code) }}">
                             @error('code')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -59,7 +59,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Capacity (splices) <span class="text-danger">*</span></label>
-                            <input type="number" name="capacity" class="form-control @error('capacity') is-invalid @enderror" 
+                            <input type="number" name="capacity" class="form-control @error('capacity') is-invalid @enderror"
                                    value="{{ old('capacity', $jointBox->capacity) }}" min="1" max="288" required>
                             <small class="text-muted">Current splices: {{ $jointBox->splices->count() }}</small>
                             @error('capacity')
@@ -81,7 +81,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Latitude</label>
-                            <input type="number" step="any" name="latitude" class="form-control @error('latitude') is-invalid @enderror" 
+                            <input type="number" step="any" name="latitude" class="form-control @error('latitude') is-invalid @enderror"
                                    value="{{ old('latitude', $jointBox->latitude) }}">
                             @error('latitude')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -89,7 +89,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Longitude</label>
-                            <input type="number" step="any" name="longitude" class="form-control @error('longitude') is-invalid @enderror" 
+                            <input type="number" step="any" name="longitude" class="form-control @error('longitude') is-invalid @enderror"
                                    value="{{ old('longitude', $jointBox->longitude) }}">
                             @error('longitude')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -113,7 +113,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Installation Date</label>
-                            <input type="date" name="installation_date" class="form-control @error('installation_date') is-invalid @enderror" 
+                            <input type="date" name="installation_date" class="form-control @error('installation_date') is-invalid @enderror"
                                    value="{{ old('installation_date', $jointBox->installation_date ? $jointBox->installation_date->format('Y-m-d') : '') }}">
                             @error('installation_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -136,7 +136,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-check mt-4">
-                                <input type="checkbox" name="is_active" value="1" class="form-check-input" 
+                                <input type="checkbox" name="is_active" value="1" class="form-check-input"
                                        id="isActive" {{ old('is_active', $jointBox->is_active) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="isActive">
                                     Active
