@@ -1,4 +1,13 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<p align="center">
+  <!-- Router icon dari Bootstrap Icons -->
+  <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="#0d2d7a" class="bi bi-router" viewBox="0 0 16 16">
+    <path d="M2 12a1 1 0 0 0-1 1v1.5a.5.5 0 0 0 .5.5H3v-2h10v2h1.5a.5.5 0 0 0 .5-.5V13a1 1 0 0 0-1-1H2Zm3.5 1.5a.5.5 0 0 1-1 0V13a.5.5 0 0 1 1 0v.5Zm2 0a.5.5 0 0 1-1 0V13a.5.5 0 0 1 1 0v.5Zm2 0a.5.5 0 0 1-1 0V13a.5.5 0 0 1 1 0v.5ZM14 9H2V7h12v2Zm-1-3H3V5h10v1Zm-1.5-4a.5.5 0 0 1 .5.5V3H4V2.5a.5.5 0 0 1 1 0V3h6v-.5a.5.5 0 0 1 .5-.5Z"/>
+  </svg>
+</p>
+
+<h2 align="center" style="color:#0d2d7a; font-weight:700;">ISP-MANAGER</h2>
+<p align="center" style="color:#6c757d;">Manajemen jaringan fiber optik Anda</p>
+
 
 <p align="center">
 <a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
@@ -13,59 +22,22 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 ## Install Laravel 12
 - composer create-project laravel/laravel isp-manager
-- composer require evilfreelancer/routeros-api-php
-- composer require barryvdh/laravel-dompdf
-- composer require phpseclib/phpseclib:~3.0
-- composer require maatwebsite/excel
 
 cd isp-manager
 
 ## Install dependencies
 - composer require spatie/laravel-permission
 - composer require laravel/breeze --dev
+- composer require evilfreelancer/routeros-api-php
+- composer require barryvdh/laravel-dompdf
+- composer require phpseclib/phpseclib:~3.0
+- composer require maatwebsite/excel
 
 ## Setup Breeze (untuk authentication UI)
 php artisan breeze:install blade
 php artisan migrate
 npm install && npm run dev
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
-
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
