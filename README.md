@@ -35,12 +35,20 @@
 - npm install && npm run dev
 
 ## SETUP .ENV dan DB nya
-APP_NAME="ISP Manager"
-APP_ENV=local
-APP_KEY= ( otomatis Berubah )
-APP_DEBUG=true
-APP_TIMEZONE=Asia/Makassar ( Sesuaikan )
-APP_URL=http://isp-manager.test
+- APP_NAME="ISP Manager"
+- APP_ENV=local
+- APP_KEY= ( otomatis Berubah )
+- APP_DEBUG=true
+- APP_TIMEZONE=Asia/Makassar ( Sesuaikan )
+- APP_URL=http://isp-manager.test
+
+- # DATABASE - POSTGRESQL
+- DB_CONNECTION=pgsql
+- DB_HOST=127.0.0.1
+- DB_PORT=5432
+- DB_DATABASE=isp_manager
+- DB_USERNAME=postgres
+- DB_PASSWORD=
 
 ##Open terminal kemdudian
 - php artisan key:generate
