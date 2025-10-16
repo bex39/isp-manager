@@ -149,19 +149,11 @@ class FiberCableSegmentController extends Controller
      * Show the form for editing the specified resource.
      */
     public function edit(FiberCableSegment $cableSegment)
-    {
-        $equipment = [
-            'olts' => OLT::where('is_active', true)->orderBy('name')->get(),
-            'odfs' => ODF::where('is_active', true)->orderBy('name')->get(),
-            'odcs' => ODC::where('is_active', true)->orderBy('name')->get(),
-            'joint_boxes' => JointBox::where('is_active', true)->orderBy('name')->get(),
-            'splitters' => Splitter::orderBy('name')->get(),
-            'odps' => ODP::where('is_active', true)->orderBy('name')->get(),
-            'onts' => ONT::where('is_active', true)->orderBy('name')->get(),
-        ];
+{
+    $cableSegment->load(['startPoint', 'endPoint', 'cores']);
 
-        return view('cable-segments.edit', compact('cableSegment', 'equipment'));
-    }
+    return view('cable-segments.edit', compact('cableSegment'));
+}
 
     /**
      * Update the specified resource in storage.
@@ -170,38 +162,60 @@ class FiberCableSegmentController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:100|unique:fiber_cable_segments,code,' . $cableSegment->id,
+            'code' => 'nullable|string|max:100|unique:fiber_cable_segments,code,' . $cableSegment->id,
             'cable_type' => 'required|in:backbone,distribution,drop',
-            'core_count' => 'required|integer|min:1|max:288',
-            'cable_brand' => 'nullable|string|max:100',
-            'cable_model' => 'nullable|string|max:100',
-
-            'start_point_type' => 'required|in:olt,odf,odc,joint_box,splitter,odp',
+            'core_count' => 'required|integer|min:2|max:288',
+            'start_point_type' => 'required|string|in:olt,odf,odc,joint_box,splitter,odp',
             'start_point_id' => 'required|integer',
-            'start_latitude' => 'nullable|numeric|between:-90,90',
-            'start_longitude' => 'nullable|numeric|between:-180,180',
-            'start_connector_type' => 'nullable|in:SC,LC,FC,ST,E2000,MPO',
-            'start_port' => 'nullable|string|max:50',
-
-            'end_point_type' => 'required|in:odf,odc,joint_box,splitter,odp,ont',
+            'end_point_type' => 'required|string|in:olt,odf,odc,joint_box,splitter,odp,ont',
             'end_point_id' => 'required|integer',
-            'end_latitude' => 'nullable|numeric|between:-90,90',
-            'end_longitude' => 'nullable|numeric|between:-180,180',
-            'end_connector_type' => 'nullable|in:SC,LC,FC,ST,E2000,MPO',
-            'end_port' => 'nullable|string|max:50',
-
             'distance' => 'nullable|numeric|min:0',
-            'installation_type' => 'nullable|in:aerial,underground,duct',
+            'installation_type' => 'nullable|in:aerial,underground,buried',
             'installation_date' => 'nullable|date',
-            'status' => 'nullable|in:active,damaged,maintenance',
+            'status' => 'nullable|in:active,maintenance,damaged,reserved',
             'notes' => 'nullable|string',
         ]);
 
+        // Validate start and end points are different
+        if ($validated['start_point_type'] === $validated['end_point_type'] &&
+            $validated['start_point_id'] === $validated['end_point_id']) {
+            return back()
+                ->withInput()
+                ->with('error', 'Start point and end point must be different!');
+        }
+
+        // Validate start point exists
+        $startPointModel = $this->getEquipmentModel($validated['start_point_type']);
+        if (!$startPointModel::find($validated['start_point_id'])) {
+            return back()
+                ->withInput()
+                ->with('error', 'Start point equipment not found!');
+        }
+
+        // Validate end point exists
+        $endPointModel = $this->getEquipmentModel($validated['end_point_type']);
+        if (!$endPointModel::find($validated['end_point_id'])) {
+            return back()
+                ->withInput()
+                ->with('error', 'End point equipment not found!');
+        }
+
+        // Check if core count is being reduced
+        if ($validated['core_count'] < $cableSegment->cores()->count()) {
+            return back()
+                ->withInput()
+                ->with('error', "Cannot reduce core count below existing cores count ({$cableSegment->cores()->count()})!");
+        }
+
+        // Set default status
+        $validated['status'] = $validated['status'] ?? 'active';
+
+        // Update cable segment
         $cableSegment->update($validated);
 
         return redirect()
             ->route('cable-segments.show', $cableSegment)
-            ->with('success', "Fiber cable segment {$cableSegment->name} updated successfully!");
+            ->with('success', "Cable segment {$cableSegment->name} updated successfully!");
     }
 
     /**
@@ -271,4 +285,18 @@ class FiberCableSegmentController extends Controller
 
         return view('cable-segments.cores', compact('cableSegment', 'cores', 'stats', 'colors'));
     }
+
+    private function getEquipmentModel($type)
+{
+    return match($type) {
+        'olt' => \App\Models\OLT::class,
+        'odf' => \App\Models\ODF::class,
+        'odc' => \App\Models\ODC::class,
+        'joint_box' => \App\Models\JointBox::class,
+        'splitter' => \App\Models\Splitter::class,
+        'odp' => \App\Models\ODP::class,
+        'ont' => \App\Models\ONT::class,
+        default => null
+    };
+}
 }

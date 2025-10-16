@@ -203,21 +203,24 @@ class FiberSpliceController extends Controller
      * Show the form for editing the specified resource.
      */
     public function edit(FiberSplice $fiberSplice)
-    {
-        $jointBoxes = JointBox::where('is_active', true)->orderBy('name')->get();
-        $cableSegments = FiberCableSegment::where('status', 'active')->orderBy('name')->get();
+        {
+            $fiberSplice->load([
+                'jointBox',
+                'inputSegment',
+                'outputSegment',
+            ]);
 
-        // Get available cores for current segments
-        $inputCores = FiberCore::where('cable_segment_id', $fiberSplice->input_segment_id)
-            ->orderBy('core_number')
-            ->get();
+            // Get core details
+            $inputCore = FiberCore::where('cable_segment_id', $fiberSplice->input_segment_id)
+                ->where('core_number', $fiberSplice->input_core_number)
+                ->first();
 
-        $outputCores = FiberCore::where('cable_segment_id', $fiberSplice->output_segment_id)
-            ->orderBy('core_number')
-            ->get();
+            $outputCore = FiberCore::where('cable_segment_id', $fiberSplice->output_segment_id)
+                ->where('core_number', $fiberSplice->output_core_number)
+                ->first();
 
-        return view('fiber-splices.edit', compact('fiberSplice', 'jointBoxes', 'cableSegments', 'inputCores', 'outputCores'));
-    }
+            return view('fiber-splices.edit', compact('fiberSplice', 'inputCore', 'outputCore'));
+        }
 
     /**
      * Update the specified resource in storage.
@@ -225,11 +228,6 @@ class FiberSpliceController extends Controller
     public function update(Request $request, FiberSplice $fiberSplice)
     {
         $validated = $request->validate([
-            'joint_box_id' => 'required|exists:joint_boxes,id',
-            'input_segment_id' => 'required|exists:fiber_cable_segments,id',
-            'input_core_number' => 'required|integer|min:1',
-            'output_segment_id' => 'required|exists:fiber_cable_segments,id',
-            'output_core_number' => 'required|integer|min:1',
             'splice_type' => 'required|in:fusion,mechanical',
             'splice_loss' => 'nullable|numeric|min:0|max:5',
             'splice_date' => 'nullable|date',
@@ -237,75 +235,10 @@ class FiberSpliceController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        // Validate input and output segments are different
-        if ($validated['input_segment_id'] == $validated['output_segment_id']) {
-            return back()
-                ->with('error', 'Input and output cable segments must be different!')
-                ->withInput();
-        }
-
-        // If cores changed, validate new cores
-        if ($fiberSplice->input_segment_id != $validated['input_segment_id'] ||
-            $fiberSplice->input_core_number != $validated['input_core_number'] ||
-            $fiberSplice->output_segment_id != $validated['output_segment_id'] ||
-            $fiberSplice->output_core_number != $validated['output_core_number']) {
-
-            // Release old cores
-            $oldInputCore = FiberCore::where('cable_segment_id', $fiberSplice->input_segment_id)
-                ->where('core_number', $fiberSplice->input_core_number)
-                ->first();
-
-            $oldOutputCore = FiberCore::where('cable_segment_id', $fiberSplice->output_segment_id)
-                ->where('core_number', $fiberSplice->output_core_number)
-                ->first();
-
-            if ($oldInputCore) {
-                $oldInputCore->update(['status' => 'available']);
-            }
-
-            if ($oldOutputCore) {
-                $oldOutputCore->update(['status' => 'available']);
-            }
-
-            // Validate new cores exist
-            $newInputCore = FiberCore::where('cable_segment_id', $validated['input_segment_id'])
-                ->where('core_number', $validated['input_core_number'])
-                ->first();
-
-            $newOutputCore = FiberCore::where('cable_segment_id', $validated['output_segment_id'])
-                ->where('core_number', $validated['output_core_number'])
-                ->first();
-
-            if (!$newInputCore || !$newOutputCore) {
-                return back()
-                    ->with('error', 'Selected cores not found!')
-                    ->withInput();
-            }
-
-            // Mark new cores as used
-            $newInputCore->update(['status' => 'used']);
-            $newOutputCore->update(['status' => 'used']);
-        }
-
-        // Update joint box capacity if changed
-        /* if ($fiberSplice->joint_box_id != $validated['joint_box_id']) {
-            // Decrement old joint box
-            $oldJointBox = JointBox::find($fiberSplice->joint_box_id);
-            if ($oldJointBox && $oldJointBox->used_capacity > 0) {
-                $oldJointBox->decrement('used_capacity');
-            }
-
-            // Increment new joint box
-            $newJointBox = JointBox::find($validated['joint_box_id']);
-            if ($newJointBox && $newJointBox->used_capacity < $newJointBox->capacity) {
-                $newJointBox->increment('used_capacity');
-            }
-        }*/
-
         $fiberSplice->update($validated);
 
         return redirect()
-            ->route('joint-boxes.splices', $fiberSplice->joint_box_id)
+            ->route('fiber-splices.show', $fiberSplice)
             ->with('success', 'Fiber splice updated successfully!');
     }
 

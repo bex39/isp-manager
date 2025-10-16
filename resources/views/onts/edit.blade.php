@@ -15,19 +15,35 @@
 @endpush
 
 @section('content')
+<div class="row mb-3">
+    <div class="col-md-12">
+        <a href="{{ route('onts.show', $ont) }}" class="btn btn-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Back to ONT
+        </a>
+        <a href="{{ route('onts.index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-list"></i> All ONTs
+        </a>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm">
-            <div class="card-header">
-                <h6 class="fw-bold mb-0">Edit ONT: {{ $ont->name }}</h6>
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Edit ONT: {{ $ont->name }}</h5>
             </div>
             <div class="card-body">
+                <!-- ✅ EDIT FORM START -->
                 <form action="{{ route('onts.update', $ont) }}" method="POST">
                     @csrf
                     @method('PUT')
 
                     <div class="row g-3">
                         <!-- Basic Info -->
+                        <div class="col-12">
+                            <h6 class="fw-bold text-primary">Basic Information</h6>
+                        </div>
+
                         <div class="col-md-6">
                             <label class="form-label">ONT Name <span class="text-danger">*</span></label>
                             <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
@@ -44,6 +60,7 @@
                             @error('sn')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <small class="text-muted">Format: HWTC12345678</small>
                         </div>
 
                         <!-- OLT Selection -->
@@ -78,7 +95,11 @@
                             @enderror
                         </div>
 
-                        <!-- ODP Selection -->
+                        <!-- ODP & Port -->
+                        <div class="col-12 mt-4">
+                            <h6 class="fw-bold text-primary">ODP Connection</h6>
+                        </div>
+
                         <div class="col-md-6">
                             <label class="form-label">ODP</label>
                             <select name="odp_id" id="odp_id" class="form-select @error('odp_id') is-invalid @enderror" onchange="loadODPInfo(this.value)">
@@ -88,7 +109,7 @@
                                             data-available="{{ $odp->getAvailablePorts() }}"
                                             data-total="{{ $odp->total_ports }}"
                                             {{ old('odp_id', $ont->odp_id) == $odp->id ? 'selected' : '' }}>
-                                        {{ $odp->name }} ({{ $odp->code }}) - {{ $odp->getAvailablePorts() }}/{{ $odp->total_ports }} available
+                                        {{ $odp->name }} ({{ $odp->code }}) - {{ $odp->total_ports - $odp->used_ports }}/{{ $odp->total_ports }} available
                                     </option>
                                 @endforeach
                             </select>
@@ -98,22 +119,20 @@
                             @enderror
                         </div>
 
-                        <!-- ODP Port -->
                         <div class="col-md-6">
                             <label class="form-label">ODP Port</label>
                             <input type="number" name="odp_port" id="odp_port"
                                    class="form-control @error('odp_port') is-invalid @enderror"
                                    value="{{ old('odp_port', $ont->odp_port) }}"
-                                   min="1">
+                                   min="1" placeholder="Port number (1-48)">
                             @error('odp_port')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <!-- PON Configuration -->
-                        <div class="col-12">
-                            <hr>
-                            <h6 class="fw-bold">PON Configuration</h6>
+                        <div class="col-12 mt-4">
+                            <h6 class="fw-bold text-primary">PON Configuration</h6>
                         </div>
 
                         <div class="col-md-4">
@@ -131,7 +150,7 @@
                         <div class="col-md-4">
                             <label class="form-label">PON Port</label>
                             <input type="number" name="pon_port" class="form-control @error('pon_port') is-invalid @enderror"
-                                   value="{{ old('pon_port', $ont->pon_port) }}" min="0">
+                                   value="{{ old('pon_port', $ont->pon_port) }}" min="0" placeholder="0-15">
                             @error('pon_port')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -140,22 +159,21 @@
                         <div class="col-md-4">
                             <label class="form-label">ONT ID</label>
                             <input type="number" name="ont_id" class="form-control @error('ont_id') is-invalid @enderror"
-                                   value="{{ old('ont_id', $ont->ont_id) }}" min="0">
+                                   value="{{ old('ont_id', $ont->ont_id) }}" min="0" placeholder="0-127">
                             @error('ont_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <!-- Device Info -->
-                        <div class="col-12">
-                            <hr>
-                            <h6 class="fw-bold">Device Information</h6>
+                        <div class="col-12 mt-4">
+                            <h6 class="fw-bold text-primary">Device Information</h6>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label">Model</label>
                             <input type="text" name="model" class="form-control @error('model') is-invalid @enderror"
-                                   value="{{ old('model', $ont->model) }}">
+                                   value="{{ old('model', $ont->model) }}" placeholder="e.g., HG8245H">
                             @error('model')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -164,7 +182,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Management IP</label>
                             <input type="text" name="management_ip" class="form-control @error('management_ip') is-invalid @enderror"
-                                   value="{{ old('management_ip', $ont->management_ip) }}">
+                                   value="{{ old('management_ip', $ont->management_ip) }}" placeholder="192.168.1.1">
                             @error('management_ip')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -173,7 +191,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Username</label>
                             <input type="text" name="username" class="form-control @error('username') is-invalid @enderror"
-                                   value="{{ old('username', $ont->username) }}">
+                                   value="{{ old('username', $ont->username) }}" placeholder="admin">
                             @error('username')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -189,15 +207,14 @@
                         </div>
 
                         <!-- WiFi Configuration -->
-                        <div class="col-12">
-                            <hr>
-                            <h6 class="fw-bold">WiFi Configuration</h6>
+                        <div class="col-12 mt-4">
+                            <h6 class="fw-bold text-primary">WiFi Configuration</h6>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label">WiFi SSID</label>
                             <input type="text" name="wifi_ssid" class="form-control @error('wifi_ssid') is-invalid @enderror"
-                                   value="{{ old('wifi_ssid', $ont->wifi_ssid) }}">
+                                   value="{{ old('wifi_ssid', $ont->wifi_ssid) }}" placeholder="MyWiFi">
                             @error('wifi_ssid')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -206,16 +223,15 @@
                         <div class="col-md-6">
                             <label class="form-label">WiFi Password</label>
                             <input type="text" name="wifi_password" class="form-control @error('wifi_password') is-invalid @enderror"
-                                   value="{{ old('wifi_password', $ont->wifi_password) }}">
+                                   value="{{ old('wifi_password', $ont->wifi_password) }}" placeholder="Min. 8 characters">
                             @error('wifi_password')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <!-- Status -->
-                        <div class="col-12">
-                            <hr>
-                            <h6 class="fw-bold">Status</h6>
+                        <div class="col-12 mt-4">
+                            <h6 class="fw-bold text-primary">Status</h6>
                         </div>
 
                         <div class="col-md-6">
@@ -224,7 +240,7 @@
                                 <option value="online" {{ old('status', $ont->status) == 'online' ? 'selected' : '' }}>Online</option>
                                 <option value="offline" {{ old('status', $ont->status) == 'offline' ? 'selected' : '' }}>Offline</option>
                                 <option value="disabled" {{ old('status', $ont->status) == 'disabled' ? 'selected' : '' }}>Disabled</option>
-                                <option value="los" {{ old('status', $ont->status) == 'los' ? 'selected' : '' }}>LOS</option>
+                                <option value="los" {{ old('status', $ont->status) == 'los' ? 'selected' : '' }}>LOS (Loss of Signal)</option>
                             </select>
                             @error('status')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -232,7 +248,8 @@
                         </div>
 
                         <div class="col-md-6">
-                            <div class="form-check form-switch mt-4">
+                            <label class="form-label d-block">Active Status</label>
+                            <div class="form-check form-switch mt-2">
                                 <input class="form-check-input" type="checkbox" name="is_active" id="is_active"
                                        {{ old('is_active', $ont->is_active) ? 'checked' : '' }} value="1">
                                 <label class="form-check-label" for="is_active">
@@ -242,14 +259,14 @@
                         </div>
 
                         <!-- Location -->
-                        <div class="col-12">
-                            <hr>
-                            <h6 class="fw-bold">Location</h6>
+                        <div class="col-12 mt-4">
+                            <h6 class="fw-bold text-primary">Location</h6>
                         </div>
 
                         <div class="col-12">
                             <div class="row g-2 mb-2">
                                 <div class="col-md-6">
+                                    <label class="form-label">Latitude</label>
                                     <input type="text" name="latitude" id="latitude"
                                            class="form-control @error('latitude') is-invalid @enderror"
                                            value="{{ old('latitude', $ont->latitude) }}"
@@ -259,6 +276,7 @@
                                     @enderror
                                 </div>
                                 <div class="col-md-6">
+                                    <label class="form-label">Longitude</label>
                                     <input type="text" name="longitude" id="longitude"
                                            class="form-control @error('longitude') is-invalid @enderror"
                                            value="{{ old('longitude', $ont->longitude) }}"
@@ -268,20 +286,26 @@
                                     @enderror
                                 </div>
                             </div>
-                            <div id="mapPicker"></div>
-                            <small class="text-muted">Click on map to update location or drag marker</small>
+                            <div id="mapPicker" class="mb-2"></div>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i> Click on map to update location or drag the marker
+                            </small>
                         </div>
 
                         <div class="col-12">
                             <label class="form-label">Address</label>
                             <textarea name="address" class="form-control @error('address') is-invalid @enderror"
-                                      rows="2">{{ old('address', $ont->address) }}</textarea>
+                                      rows="2" placeholder="Full address">{{ old('address', $ont->address) }}</textarea>
                             @error('address')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <!-- Additional Info -->
+                        <div class="col-12 mt-4">
+                            <h6 class="fw-bold text-primary">Additional Information</h6>
+                        </div>
+
                         <div class="col-md-6">
                             <label class="form-label">Installation Date</label>
                             <input type="date" name="installation_date"
@@ -295,13 +319,14 @@
                         <div class="col-12">
                             <label class="form-label">Notes</label>
                             <textarea name="notes" class="form-control @error('notes') is-invalid @enderror"
-                                      rows="3">{{ old('notes', $ont->notes) }}</textarea>
+                                      rows="3" placeholder="Additional notes...">{{ old('notes', $ont->notes) }}</textarea>
                             @error('notes')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
 
+                    <!-- ✅ UPDATE BUTTONS -->
                     <div class="d-flex gap-2 mt-4">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-save"></i> Update ONT
@@ -309,37 +334,59 @@
                         <a href="{{ route('onts.show', $ont) }}" class="btn btn-secondary">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
-                        <form action="{{ route('onts.destroy', $ont) }}" method="POST" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger"
-                                    onclick="return confirm('Delete {{ $ont->name }}?\n\nThis action cannot be undone and will decrement ODP used ports.')">
-                                <i class="bi bi-trash"></i> Delete
-                            </button>
-                        </form>
                     </div>
                 </form>
+                <!-- ✅ EDIT FORM END -->
+
+                <!-- ✅ DELETE FORM (SEPARATE) -->
+                <hr class="my-4">
+                <div class="alert alert-danger">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-exclamation-triangle"></i> Danger Zone
+                    </h6>
+                    <p class="mb-2 small">Deleting this ONT will:</p>
+                    <ul class="small mb-3">
+                        <li>Remove ONT from database permanently</li>
+                        <li>Decrement ODP used ports</li>
+                        <li>Attempt to unprovision from OLT</li>
+                    </ul>
+                    <form action="{{ route('onts.destroy', $ont) }}" method="POST" onsubmit="return confirmDelete()">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="bi bi-trash"></i> Delete This ONT
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Sidebar -->
     <div class="col-lg-4">
-        <div class="card border-0 shadow-sm">
+        <!-- Current Status Card -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 fw-bold">Current Status</h6>
+            </div>
             <div class="card-body">
-                <h6 class="fw-bold mb-3">Current Status</h6>
-                <table class="table table-sm table-borderless">
+                <table class="table table-sm table-borderless mb-0">
                     <tr>
-                        <td width="40%">Status:</td>
+                        <td width="40%" class="text-muted">Status:</td>
                         <td>
                             @if($ont->status === 'online')
                                 <span class="badge bg-success">Online</span>
+                            @elseif($ont->status === 'offline')
+                                <span class="badge bg-secondary">Offline</span>
+                            @elseif($ont->status === 'los')
+                                <span class="badge bg-danger">LOS</span>
                             @else
-                                <span class="badge bg-secondary">{{ ucfirst($ont->status) }}</span>
+                                <span class="badge bg-warning">{{ ucfirst($ont->status) }}</span>
                             @endif
                         </td>
                     </tr>
                     <tr>
-                        <td>Signal:</td>
+                        <td class="text-muted">Signal:</td>
                         <td>
                             @if($ont->rx_power)
                                 <span class="{{ $ont->getSignalBadgeClass() }}">
@@ -351,7 +398,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>Last Seen:</td>
+                        <td class="text-muted">Last Seen:</td>
                         <td>
                             @if($ont->last_seen)
                                 {{ $ont->last_seen->diffForHumans() }}
@@ -364,20 +411,56 @@
             </div>
         </div>
 
-        <div class="card border-0 shadow-sm mt-3" id="odpStatusCard" style="display: none;">
+        <!-- ODP Status Card -->
+        <div class="card border-0 shadow-sm" id="odpStatusCard" style="display: none;">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 fw-bold">ODP Status</h6>
+            </div>
             <div class="card-body">
-                <h6 class="fw-bold mb-3">ODP Status</h6>
                 <div id="odpStatusContent"></div>
+            </div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="card border-0 shadow-sm mt-3">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle"></i> Information
+                </h6>
+            </div>
+            <div class="card-body">
+                <small>
+                    <strong>PON Configuration:</strong><br>
+                    PON Port and ONT ID are required for auto-provisioning to OLT.
+                    <hr class="my-2">
+                    <strong>ODP Port:</strong><br>
+                    Select ODP first to see available ports. Make sure port is not already in use.
+                </small>
             </div>
         </div>
     </div>
 </div>
+@endsection
 
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// Initialize map
-const map = L.map('mapPicker').setView([{{ $ont->latitude ?? -8.6705 }}, {{ $ont->longitude ?? 115.2126 }}], 15);
+// ✅ DELETE CONFIRMATION
+function confirmDelete() {
+    return confirm('⚠️ DELETE ONT: {{ $ont->name }}?\n\n' +
+                   '❌ This will:\n' +
+                   '• Remove ONT from database permanently\n' +
+                   '• Decrement ODP used ports\n' +
+                   '• Attempt to unprovision from OLT\n\n' +
+                   '⚠️ THIS ACTION CANNOT BE UNDONE!\n\n' +
+                   'Type YES to confirm and press OK to proceed.');
+}
+
+// ✅ MAP INITIALIZATION
+const defaultLat = {{ $ont->latitude ?? -8.6705 }};
+const defaultLng = {{ $ont->longitude ?? 115.2126 }};
+
+const map = L.map('mapPicker').setView([defaultLat, defaultLng], 15);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
@@ -385,7 +468,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 // Marker
-let marker = L.marker([{{ $ont->latitude ?? -8.6705 }}, {{ $ont->longitude ?? 115.2126 }}], {
+let marker = L.marker([defaultLat, defaultLng], {
     draggable: true
 }).addTo(map);
 
@@ -403,7 +486,7 @@ map.on('click', function(e) {
     document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
 });
 
-// ODP Info Display
+// ✅ ODP INFO DISPLAY
 function loadODPInfo(odpId) {
     const select = document.getElementById('odp_id');
     const option = select.querySelector(`option[value="${odpId}"]`);
@@ -417,7 +500,7 @@ function loadODPInfo(odpId) {
         const used = total - available;
         const percentage = ((used / total) * 100).toFixed(1);
 
-        // Add current ONT port back to available if changing ODP
+        // Adjust for current ONT if editing same ODP
         const currentOdpId = {{ $ont->odp_id ?? 'null' }};
         let adjustedAvailable = available;
         if (currentOdpId == odpId) {
@@ -445,7 +528,7 @@ function loadODPInfo(odpId) {
                         ${used}/${total}
                     </div>
                 </div>
-                <small class="text-muted">${adjustedAvailable} ports available</small>
+                <small class="text-muted">${adjustedAvailable} port(s) available</small>
             `;
         }
     } else {
@@ -463,4 +546,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
-@endsection

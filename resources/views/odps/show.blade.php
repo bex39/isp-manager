@@ -1,156 +1,236 @@
 @extends('layouts.admin')
 
-@section('title', 'ODP: ' . $odp->name)
+@section('title', 'ODP Details')
 @section('page-title', 'ODP Details')
 
 @section('content')
 <div class="row mb-3">
     <div class="col-md-8">
-        <h4 class="fw-bold">{{ $odp->name }}</h4>
-        <p class="text-muted mb-0">Code: {{ $odp->code }}</p>
+        <a href="{{ route('odps.index') }}" class="btn btn-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
     </div>
     <div class="col-md-4 text-end">
-        <a href="{{ route('odps.index') }}" class="btn btn-secondary btn-sm">
-            <i class="bi bi-arrow-left"></i> Back
-        </a>
-        <a href="{{ route('odps.edit', $odp) }}" class="btn btn-primary btn-sm">
+        <a href="{{ route('odps.edit', $odp) }}" class="btn btn-warning btn-sm">
             <i class="bi bi-pencil"></i> Edit
         </a>
+        <form action="{{ route('odps.destroy', $odp) }}" method="POST" class="d-inline">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn btn-danger btn-sm"
+                    onclick="return confirm('Delete this ODP?')">
+                <i class="bi bi-trash"></i> Delete
+            </button>
+        </form>
     </div>
 </div>
 
-<!-- Status Cards -->
-<div class="row g-3 mb-4">
+<!-- Statistics Cards -->
+<div class="row g-3 mb-3">
     <div class="col-md-3">
         <div class="card border-0 shadow-sm">
             <div class="card-body text-center">
-                <h2 class="text-primary mb-0">{{ $odp->total_ports }}</h2>
-                <p class="text-muted mb-0 small">Total Ports</p>
+                @php
+                    $connectedONTs = $odp->onts ? $odp->onts->count() : 0;
+                @endphp
+                <h2 class="text-primary mb-0">{{ $connectedONTs }}</h2>
+                <p class="text-muted mb-0 small">Connected ONTs</p>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card border-0 shadow-sm">
             <div class="card-body text-center">
-                <h2 class="text-success mb-0">{{ $odp->getAvailablePorts() }}</h2>
-                <p class="text-muted mb-0 small">Available</p>
+                @php
+                    $availablePorts = $odp->port_capacity - $connectedONTs;
+                @endphp
+                <h2 class="text-success mb-0">{{ $availablePorts }}</h2>
+                <p class="text-muted mb-0 small">Available Ports</p>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card border-0 shadow-sm">
             <div class="card-body text-center">
-                <h2 class="text-danger mb-0">{{ $odp->used_ports }}</h2>
-                <p class="text-muted mb-0 small">Used</p>
+                @php
+                    $usagePercent = $odp->port_capacity > 0
+                        ? round(($connectedONTs / $odp->port_capacity) * 100, 1)
+                        : 0;
+                @endphp
+                <h2 class="text-warning mb-0">{{ $usagePercent }}%</h2>
+                <p class="text-muted mb-0 small">Port Usage</p>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card border-0 shadow-sm">
             <div class="card-body text-center">
-                <h2 class="text-info mb-0">{{ $odp->splitters->count() }}</h2>
-                <p class="text-muted mb-0 small">Splitters</p>
+                <h2 class="text-{{ $odp->is_active ? 'success' : 'danger' }} mb-0">
+                    {{ $odp->is_active ? 'Active' : 'Inactive' }}
+                </h2>
+                <p class="text-muted mb-0 small">Status</p>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-3">
+<div class="row">
     <!-- ODP Info -->
-    <div class="col-md-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header">
-                <h6 class="fw-bold mb-0">ODP Information</h6>
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">ODP Information</h5>
             </div>
             <div class="card-body">
-                <table class="table table-sm">
-                    <tr>
-                        <td width="40%"><strong>Code</strong></td>
-                        <td><code>{{ $odp->code }}</code></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Name</strong></td>
-                        <td>{{ $odp->name }}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Connected OLT</strong></td>
-                        <td>
-                            @if($odp->olt)
-                                <a href="{{ route('olts.show', $odp->olt) }}">{{ $odp->olt->name }}</a>
-                            @else
-                                <span class="text-muted">Not connected</span>
-                            @endif
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>Address</strong></td>
-                        <td>{{ $odp->address ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Coordinates</strong></td>
-                        <td>
-                            @if($odp->latitude && $odp->longitude)
-                                {{ $odp->latitude }}, {{ $odp->longitude }}
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small">Name</label>
+                        <h5>{{ $odp->name }}</h5>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">Code</label>
+                        <h5>{{ $odp->code ?? '-' }}</h5>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small">Port Capacity</label>
+                        <p class="mb-0">{{ $odp->port_capacity }} ports</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">Type</label>
+                        <p class="mb-0">
+                            @if($odp->type)
+                                <span class="badge bg-secondary">{{ ucfirst($odp->type) }}</span>
                             @else
                                 -
                             @endif
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>Status</strong></td>
-                        <td>
-                            <span class="badge {{ $odp->is_active ? 'bg-success' : 'bg-secondary' }}">
-                                {{ $odp->is_active ? 'Active' : 'Inactive' }}
-                            </span>
-                        </td>
-                    </tr>
-                </table>
+                        </p>
+                    </div>
+                </div>
+
+                @if($odp->location)
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label class="text-muted small">Location</label>
+                        <p class="mb-0">{{ $odp->location }}</p>
+                        @if($odp->latitude && $odp->longitude)
+                            <a href="https://www.google.com/maps?q={{ $odp->latitude }},{{ $odp->longitude }}"
+                               target="_blank"
+                               class="btn btn-sm btn-outline-info mt-2">
+                                <i class="bi bi-map"></i> View on Map
+                            </a>
+                        @endif
+                    </div>
+                </div>
+                @endif
+
+                @if($odp->notes)
+                <div class="row">
+                    <div class="col-md-12">
+                        <label class="text-muted small">Notes</label>
+                        <p class="text-muted">{{ $odp->notes }}</p>
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
-    </div>
 
-    <!-- Splitters -->
-    <div class="col-md-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="fw-bold mb-0">Splitters</h6>
-                <a href="{{ route('splitters.create', ['odp_id' => $odp->id]) }}" class="btn btn-sm btn-primary">
-                    <i class="bi bi-plus"></i> Add
-                </a>
+        <!-- Connected ONTs -->
+        @if($odp->onts && $odp->onts->count() > 0)
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Connected ONTs ({{ $odp->onts->count() }})</h5>
             </div>
             <div class="card-body">
-                @if($odp->splitters->count() > 0)
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Ratio</th>
-                                    <th>Ports</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($odp->splitters as $splitter)
-                                <tr>
-                                    <td>{{ $splitter->name }}</td>
-                                    <td><span class="badge bg-info">{{ $splitter->ratio }}</span></td>
-                                    <td>
-                                        <small>{{ $splitter->getAvailableOutputs() }} / {{ $splitter->output_ports }}</small>
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('splitters.show', $splitter) }}" class="btn btn-sm btn-outline-info">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <p class="text-muted text-center py-3">No splitters configured</p>
-                @endif
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>ONT Name</th>
+                                <th>Serial Number</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($odp->onts->take(10) as $ont)
+                            <tr>
+                                <td>{{ $ont->name }}</td>
+                                <td><code>{{ $ont->serial_number }}</code></td>
+                                <td>
+                                    <span class="badge bg-{{ $ont->is_active ? 'success' : 'danger' }}">
+                                        {{ $ont->is_active ? 'Active' : 'Inactive' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ route('onts.show', $ont) }}" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        @endif
+    </div>
+
+    <!-- Side Info -->
+    <div class="col-md-4">
+        <!-- Status Card -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-{{ $odp->is_active ? 'success' : 'danger' }} text-white">
+                <h6 class="mb-0">Status</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <small class="text-muted">Active Status</small>
+                    <p class="mb-0">
+                        <span class="badge bg-{{ $odp->is_active ? 'success' : 'danger' }}">
+                            {{ $odp->is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                    </p>
+                </div>
+                <div>
+                    <small class="text-muted">Operational Status</small>
+                    <p class="mb-0">
+                        <span class="badge bg-secondary">{{ ucfirst($odp->status ?? 'active') }}</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Installation Info -->
+        @if($odp->installation_date)
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Installation</h6>
+            </div>
+            <div class="card-body">
+                <small class="text-muted">Installation Date</small>
+                <p class="mb-0">{{ $odp->installation_date->format('d M Y') }}</p>
+            </div>
+        </div>
+        @endif
+
+        <!-- Timestamps -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-clock-history"></i> History</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <small class="text-muted">Created</small>
+                    <p class="mb-0 small">{{ $odp->created_at->format('d M Y, H:i') }}</p>
+                </div>
+                <div>
+                    <small class="text-muted">Last Updated</small>
+                    <p class="mb-0 small">{{ $odp->updated_at->format('d M Y, H:i') }}</p>
+                </div>
             </div>
         </div>
     </div>

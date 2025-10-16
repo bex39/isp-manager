@@ -424,6 +424,20 @@
                             <i class="bi bi-diagram-2"></i> Manage Cores
                         </a>
                     </div>
+                    <div class="col-md-4 text-end">
+                        <a href="{{ route('cable-segments.edit', $cableSegment) }}" class="btn btn-warning btn-sm">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <form action="{{ route('cable-segments.destroy', $cableSegment) }}" method="POST" class="d-inline">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger btn-sm"
+                                    onclick="return confirm('Delete this cable segment?')">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+
                     <div class="col-md-3">
                         @if($cableSegment->startPoint)
                             <a href="{{ route(Str::plural(Str::kebab($cableSegment->start_point_type)) . '.show', $cableSegment->start_point_id) }}" class="btn btn-outline-primary w-100 btn-sm">

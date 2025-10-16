@@ -211,17 +211,17 @@
                                 <a href="{{ route('cable-segments.show', $segment) }}" class="btn btn-outline-info" title="View">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a href="{{ route('cable-segments.cores', $segment) }}" class="btn btn-outline-primary" title="Cores">
-                                    <i class="bi bi-diagram-2"></i>
-                                </a>
                                 <a href="{{ route('cable-segments.edit', $segment) }}" class="btn btn-outline-warning" title="Edit">
                                     <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{{ route('cable-segments.cores', $segment) }}" class="btn btn-outline-primary" title="Cores">
+                                    <i class="bi bi-bezier2"></i>
                                 </a>
                                 <form action="{{ route('cable-segments.destroy', $segment) }}" method="POST" class="d-inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-outline-danger"
-                                            onclick="return confirm('Delete cable segment {{ $segment->name }}?')"
+                                            onclick="return confirm('Delete this cable?')"
                                             title="Delete">
                                         <i class="bi bi-trash"></i>
                                     </button>

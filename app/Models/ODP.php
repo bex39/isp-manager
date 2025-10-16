@@ -35,6 +35,23 @@ class ODP extends Model
     ];
 
     // ==================== RELATIONSHIPS ====================
+    public function olt()
+    {
+        return $this->belongsTo(OLT::class, 'olt_id');
+    }
+
+    /**
+     * Get splitters connected to this ODP
+     */
+    public function splitters()
+    {
+        // ✅ FIX: If splitters table has odp_id column
+        return $this->hasMany(Splitter::class, 'odp_id');
+
+        // OR if using polymorphic relation:
+        // return $this->morphMany(Splitter::class, 'location');
+    }
+
 
     /**
      * ODP has many ONTs (TAMBAH INI)

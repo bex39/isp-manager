@@ -148,10 +148,7 @@ class SplitterController extends Controller
      */
     public function edit(Splitter $splitter)
     {
-        $odps = ODP::where('is_active', true)->orderBy('name')->get();
-        $odcs = ODC::where('is_active', true)->orderBy('name')->get();
-
-        return view('splitters.edit', compact('splitter', 'odps', 'odcs'));
+        return view('splitters.edit', compact('splitter'));
     }
 
     /**
@@ -161,63 +158,21 @@ class SplitterController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'odp_id' => 'nullable|exists:odps,id',
-            'odc_id' => 'nullable|exists:odcs,id',
-            'odc_port' => 'nullable|integer|min:1',
-            'type' => 'nullable|string|max:100',
-            'ratio' => 'required|string|max:50',
-            'input_ports' => 'required|integer|min:1',
-            'output_ports' => 'required|integer|min:1',
+            'code' => 'nullable|string|max:100|unique:splitters,code,' . $splitter->id,
+            'splitter_ratio' => 'required|string|in:1:2,1:4,1:8,1:16,1:32,1:64',
+            'output_ports' => 'required|integer|min:2|max:64',
+            'insertion_loss' => 'nullable|numeric|min:0|max:30',
+            'type' => 'nullable|in:plc,fbt',
+            'location' => 'nullable|string',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+            'installation_date' => 'nullable|date',
+            'status' => 'nullable|in:active,maintenance,damaged',
             'notes' => 'nullable|string',
         ]);
 
-        // Handle ODC change
-        $oldOdcId = $splitter->odc_id;
-        $oldOdcPort = $splitter->odc_port;
-        $newOdcId = $validated['odc_id'] ?? null;
-        $newOdcPort = $validated['odc_port'] ?? null;
-
-        if ($oldOdcId != $newOdcId || $oldOdcPort != $newOdcPort) {
-            // Decrement old ODC
-            if ($oldOdcId) {
-                $oldOdc = ODC::find($oldOdcId);
-                if ($oldOdc) {
-                    $oldOdc->decrementUsedPorts();
-                }
-            }
-
-            // Validate and increment new ODC
-            if ($newOdcId && $newOdcPort) {
-                $newOdc = ODC::find($newOdcId);
-
-                // Check if new port available
-                $portUsed = Splitter::where('odc_id', $newOdcId)
-                    ->where('odc_port', $newOdcPort)
-                    ->where('id', '!=', $splitter->id)
-                    ->exists();
-
-                if ($portUsed) {
-                    return back()
-                        ->with('error', "ODC port {$newOdcPort} is already in use!")
-                        ->withInput();
-                }
-
-                if ($newOdc) {
-                    $newOdc->incrementUsedPorts();
-                }
-            }
-        }
-
-        // Validate output_ports not less than used_outputs
-        if ($validated['output_ports'] < $splitter->used_outputs) {
-            return back()
-                ->with('error', "Cannot reduce output ports below currently used outputs ({$splitter->used_outputs})!")
-                ->withInput();
-        }
-
-        $validated['total_ports'] = $validated['output_ports'];
+        $validated['is_active'] = $request->has('is_active');
+        $validated['status'] = $validated['status'] ?? 'active';
 
         $splitter->update($validated);
 
