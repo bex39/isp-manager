@@ -35,12 +35,12 @@
 - npm install && npm run dev
 
 ## SETUP .ENV dan DB nya
-APP_NAME="ISP Manager"
-APP_ENV=local
-APP_KEY= ( otomatis Berubah )
-APP_DEBUG=true
-APP_TIMEZONE=Asia/Makassar ( Sesuaikan )
-APP_URL=http://isp-manager.test
+- APP_NAME="ISP Manager"
+- APP_ENV=local
+- APP_KEY= ( otomatis Berubah )
+- APP_DEBUG=true
+- APP_TIMEZONE=Asia/Makassar ( Sesuaikan )
+- APP_URL=http://isp-manager.test
 
 ##Open terminal kemdudian
 - php artisan key:generate
