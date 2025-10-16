@@ -15,6 +15,8 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Database : Postgresql
+
 ## Install Laravel 12
 - composer create-project laravel/laravel isp-manager
 - cd isp-manager
