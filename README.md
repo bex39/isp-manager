@@ -42,6 +42,14 @@
 - APP_TIMEZONE=Asia/Makassar ( Sesuaikan )
 - APP_URL=http://isp-manager.test
 
+- # DATABASE - POSTGRESQL
+- DB_CONNECTION=pgsql
+- DB_HOST=127.0.0.1
+- DB_PORT=5432
+- DB_DATABASE=isp_manager
+- DB_USERNAME=postgres
+- DB_PASSWORD=
+
 ##Open terminal kemdudian
 - php artisan key:generate
 - php artisan migrate:fresh --seed
