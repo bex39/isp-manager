@@ -14,20 +14,23 @@ class OLT extends Model
 
     protected $fillable = [
         'name',
+        'code',
+        'brand',
+        'model',
+        'olt_type',
         'ip_address',
         'telnet_port',
         'ssh_port',
         'username',
         'password',
-        'olt_type',
-        'model',
+        'total_ports',
         'address',
         'latitude',
         'longitude',
-        'total_ports',
-        'is_active',
         'last_seen',
         'notes',
+        'is_active',
+        'status',
     ];
 
     protected $casts = [
@@ -50,7 +53,17 @@ class OLT extends Model
     // Helper methods tetap sama
     public function isOnline()
     {
-        return $this->last_seen && $this->last_seen->diffInMinutes(now()) < 10;
+        // If status column exists, use it
+        if (isset($this->status)) {
+            return $this->status === 'online';
+        }
+
+        // Fallback: check last_seen (online if seen in last 10 minutes)
+        if ($this->last_seen) {
+            return $this->last_seen->gt(now()->subMinutes(10));
+        }
+
+        return false;
     }
 
     public function getStatusBadgeClass()
@@ -59,8 +72,20 @@ class OLT extends Model
             return 'badge bg-secondary';
         }
 
+        if (isset($this->status)) {
+            return match($this->status) {
+                'online' => 'badge bg-success',
+                'offline' => 'badge bg-danger',
+                'unreachable' => 'badge bg-warning',
+                'maintenance' => 'badge bg-info',
+                default => 'badge bg-secondary',
+            };
+        }
+
+        // Fallback
         return $this->isOnline() ? 'badge bg-success' : 'badge bg-danger';
     }
+
 
     public function getOltTypeLabel()
     {
@@ -94,8 +119,13 @@ public function outgoingCables()
 /**
  * OLT has many FiberCableSegments (as end point)
  */
-public function incomingCables()
-{
-    return $this->morphMany(FiberCableSegment::class, 'end_point');
-}
+    public function incomingCables()
+    {
+        return $this->morphMany(FiberCableSegment::class, 'end_point');
+    }
+
+     public function getCustomersCountAttribute()
+    {
+        return $this->onts()->whereNotNull('customer_id')->count();
+    }
 }

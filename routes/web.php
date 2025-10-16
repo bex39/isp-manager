@@ -112,7 +112,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('olts/{olt}/test', [OLTController::class, 'testConnection'])->name('olts.test');
     Route::post('olts/{olt}/ont-list', [OLTController::class, 'getONTList'])->name('olts.ont-list');
     Route::get('olts/{olt}/ont-status', [OLTController::class, 'getONTStatus'])->name('olts.ont-status');
+    Route::post('olts/{olt}/check-status', [OLTController::class, 'checkStatus'])->name('olts.check-status');
+    Route::post('olts/check-all-status', [OLTController::class, 'checkAllStatus'])->name('olts.check-all-status');
     Route::post('olts/{olt}/ssh-command', [OLTController::class, 'executeSSHCommand'])->name('olts.ssh-command');
+
 
     // ✅ ODF Management (NEW)
     Route::resource('odfs', ODFController::class);
@@ -210,6 +213,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // ✅ Network Topology & Path Tracing (NEW)
     Route::get('network-topology', [DashboardController::class, 'networkTopology'])->name('network.topology');
+    Route::get('network-topology/data', [DashboardController::class, 'getTopologyData'])->name('network.topology.data');
     Route::get('network-map', [DashboardController::class, 'networkMap'])->name('network.map');
     Route::get('fiber-path/{ont}', [DashboardController::class, 'fiberPath'])->name('network.fiber-path');
 

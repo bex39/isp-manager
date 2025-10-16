@@ -292,7 +292,7 @@
                             </small>
                         </div>
 
-                        <div class="col-12">
+                        <!--<div class="col-12">
                             <label class="form-label">Address</label>
                             <textarea name="address" class="form-control @error('address') is-invalid @enderror"
                                       rows="2" placeholder="Full address">{{ old('address', $ont->address) }}</textarea>
@@ -301,7 +301,7 @@
                             @enderror
                         </div>
 
-                        <!-- Additional Info -->
+                         Additional Info
                         <div class="col-12 mt-4">
                             <h6 class="fw-bold text-primary">Additional Information</h6>
                         </div>
@@ -314,7 +314,7 @@
                             @error('installation_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                        </div>
+                        </div>-->
 
                         <div class="col-12">
                             <label class="form-label">Notes</label>

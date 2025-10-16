@@ -22,26 +22,155 @@ class OLTController extends Controller implements HasMiddleware
     }
 
     public function index(Request $request)
-    {
-        $query = OLT::withCount('customers');
+{
+    $search = $request->input('search');
+    $status = $request->input('status');
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('ip_address', 'like', "%{$search}%");
-            });
-        }
+    $query = OLT::query();
 
-        if ($request->filled('status')) {
-            $isActive = $request->status === 'active';
-            $query->where('is_active', $isActive);
-        }
-
-        $olts = $query->latest()->paginate(15);
-
-        return view('olts.index', compact('olts'));
+    if ($search) {
+        $query->where(function($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('ip_address', 'like', "%{$search}%")
+              ->orWhere('address', 'like', "%{$search}%");
+        });
     }
+
+    // Filter by status if provided
+    if ($status === 'active') {
+        $query->where('is_active', true);
+    } elseif ($status === 'inactive') {
+        $query->where('is_active', false);
+    }
+
+    $olts = $query->latest()->paginate(20)->withQueryString();
+
+    // Quick auto-check status
+    if (\Schema::hasColumn('olts', 'status')) {
+        foreach ($olts as $olt) {
+            if (!$olt->last_seen || $olt->last_seen->lt(now()->subMinutes(5))) {
+                $this->quickCheckOLT($olt);
+            }
+        }
+    }
+
+    // Build stats array
+    $stats = [
+        'total' => OLT::count(),
+        'active' => OLT::where('is_active', true)->count(),
+        'inactive' => OLT::where('is_active', false)->count(),
+    ];
+
+    // Add online/offline stats if status column exists
+    if (\Schema::hasColumn('olts', 'status')) {
+        $stats['online'] = OLT::where('status', 'online')->count();
+        $stats['offline'] = OLT::where('status', 'offline')->count();
+    }
+
+    return view('olts.index', compact('olts', 'stats'));
+}
+
+/**
+ * Quick status check
+ */
+private function quickCheckOLT($olt)
+{
+    $host = $olt->ip_address;
+
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        $command = "ping -n 1 -w 1000 {$host}";
+    } else {
+        $command = "ping -c 1 -W 1 {$host} 2>&1";
+    }
+
+    exec($command, $output, $result);
+
+    $isOnline = ($result === 0);
+
+    $olt->update([
+        'status' => $isOnline ? 'online' : 'offline',
+        'last_seen' => $isOnline ? now() : $olt->last_seen,
+    ]);
+}
+
+/**
+ * Check OLT status manually
+ */
+public function checkStatus(OLT $olt)
+{
+    $host = $olt->ip_address;
+
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        $ping = "ping -n 1 -w 1000 {$host}";
+    } else {
+        $ping = "ping -c 1 -W 1 {$host} 2>&1";
+    }
+
+    exec($ping, $output, $result);
+
+    $isOnline = ($result === 0);
+
+    $updateData = [
+        'last_seen' => $isOnline ? now() : $olt->last_seen,
+    ];
+
+    if (\Schema::hasColumn('olts', 'status')) {
+        $updateData['status'] = $isOnline ? 'online' : 'offline';
+    }
+
+    $olt->update($updateData);
+
+    $statusText = $isOnline ? 'online' : 'offline';
+
+    return back()->with('success', "OLT {$olt->name} is {$statusText}");
+}
+
+/**
+ * Check all OLTs status
+ */
+public function checkAllStatus()
+{
+    $olts = OLT::where('is_active', true)->get();
+
+    $onlineCount = 0;
+    $offlineCount = 0;
+
+    foreach ($olts as $olt) {
+        $host = $olt->ip_address;
+
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            $ping = "ping -n 1 -w 1000 {$host}";
+        } else {
+            $ping = "ping -c 1 -W 1 {$host} 2>&1";
+        }
+
+        exec($ping, $output, $result);
+
+        $isOnline = ($result === 0);
+
+        if ($isOnline) {
+            $onlineCount++;
+        } else {
+            $offlineCount++;
+        }
+
+        $updateData = [
+            'last_seen' => $isOnline ? now() : $olt->last_seen,
+        ];
+
+        if (\Schema::hasColumn('olts', 'status')) {
+            $updateData['status'] = $isOnline ? 'online' : 'offline';
+        }
+
+        $olt->update($updateData);
+    }
+
+    return back()->with('success', "Status checked: {$onlineCount} online, {$offlineCount} offline");
+}
+
+    /**
+ * Check OLT status manually
+ */
 
     public function create()
     {
