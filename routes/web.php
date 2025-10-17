@@ -26,6 +26,11 @@ use App\Http\Controllers\ODCController;
 use App\Http\Controllers\FiberSpliceController;
 use App\Http\Controllers\ODPPortController;
 use App\Http\Controllers\FiberTestResultController;
+use App\Http\Controllers\AcsManagementController;
+use App\Http\Controllers\AcsTemplateController;
+use App\Http\Controllers\AcsBulkOperationController;
+use App\Http\Controllers\AcsAlertController;
+use App\Http\Controllers\AcsProvisioningController;
 
 use App\Http\Controllers\Customer\AuthController as CustomerAuthController;
 use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
@@ -90,20 +95,128 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // ==================== REPORTS ====================
     Route::prefix('reports')->name('reports.')->group(function () {
-        Route::get('/', [ReportController::class, 'index'])->name('index');
-        Route::get('financial', [ReportController::class, 'financial'])->name('financial');
-        Route::get('financial/pdf', [ReportController::class, 'exportFinancialPdf'])->name('financial.pdf');
-        Route::get('financial/excel', [ReportController::class, 'exportFinancialExcel'])->name('financial.excel');
-        Route::get('customer', [ReportController::class, 'customer'])->name('customer');
-        Route::get('customer/excel', [ReportController::class, 'exportCustomerExcel'])->name('customer.excel');
-        Route::get('support', [ReportController::class, 'support'])->name('support');
-        Route::get('support/excel', [ReportController::class, 'exportSupportExcel'])->name('support.excel');
+    Route::get('/', [ReportController::class, 'index'])->name('index');
+    Route::get('financial', [ReportController::class, 'financial'])->name('financial');
+    Route::get('financial/pdf', [ReportController::class, 'exportFinancialPdf'])->name('financial.pdf');
+    Route::get('financial/excel', [ReportController::class, 'exportFinancialExcel'])->name('financial.excel');
+    Route::get('customer', [ReportController::class, 'customer'])->name('customer');
+    Route::get('customer/excel', [ReportController::class, 'exportCustomerExcel'])->name('customer.excel');
+    Route::get('support', [ReportController::class, 'support'])->name('support');
+    Route::get('support/excel', [ReportController::class, 'exportSupportExcel'])->name('support.excel');
 
         // ✅ NEW REPORTS
-        Route::get('capacity', [ReportController::class, 'capacity'])->name('capacity');
-        Route::get('fiber-usage', [ReportController::class, 'fiberUsage'])->name('fiber-usage');
-        Route::get('port-utilization', [ReportController::class, 'portUtilization'])->name('port-utilization');
+    Route::get('capacity', [ReportController::class, 'capacity'])->name('capacity');
+    Route::get('fiber-usage', [ReportController::class, 'fiberUsage'])->name('fiber-usage');
+    Route::get('port-utilization', [ReportController::class, 'portUtilization'])->name('port-utilization');
     });
+
+    // ==================== ACS MANAGEMENT ROUTES ====================
+
+Route::prefix('acs')->name('acs.')->middleware(['auth'])->group(function () {
+
+    // ===== MAIN DEVICE MANAGEMENT =====
+    Route::get('/', [AcsManagementController::class, 'index'])->name('index');
+    Route::get('devices/{ont}', [AcsManagementController::class, 'show'])->name('show');
+
+    // ===== DEVICE ACTIONS =====
+    Route::post('devices/{ont}/provision', [AcsManagementController::class, 'provision'])->name('provision');
+    Route::post('devices/{ont}/re-provision', [AcsManagementController::class, 'reprovision'])->name('reprovision');
+    Route::post('devices/{ont}/reboot', [AcsManagementController::class, 'reboot'])->name('reboot');
+    Route::post('devices/{ont}/check-signal', [AcsManagementController::class, 'checkSignal'])->name('check-signal');
+    Route::post('devices/{ont}/configure', [AcsManagementController::class, 'configure'])->name('configure');
+
+    // ===== DEVICE SESSION MANAGEMENT =====
+    Route::post('devices/{ont}/enroll', [AcsManagementController::class, 'enrollToAcs'])->name('enroll');
+    Route::delete('devices/{ont}/unenroll', [AcsManagementController::class, 'unenrollFromAcs'])->name('unenroll');
+    Route::post('devices/{ont}/refresh-session', [AcsManagementController::class, 'refreshSession'])->name('refresh-session');
+
+    // ===== SCAN & DISCOVERY =====
+    Route::post('scan-devices', [AcsManagementController::class, 'scanDevices'])->name('scan-devices');
+    Route::post('scan-olt/{olt}', [AcsManagementController::class, 'scanOlt'])->name('scan-olt');
+    Route::get('unprovisioned', [AcsManagementController::class, 'unprovisionedDevices'])->name('unprovisioned');
+
+    // ===== BULK OPERATIONS =====
+    Route::prefix('bulk')->name('bulk.')->group(function () {
+        Route::get('/', [AcsBulkOperationController::class, 'index'])->name('index');
+        Route::post('reboot', [AcsBulkOperationController::class, 'reboot'])->name('reboot');
+        Route::post('provision', [AcsBulkOperationController::class, 'provision'])->name('provision');
+        Route::post('configure', [AcsBulkOperationController::class, 'configure'])->name('configure');
+        Route::post('wifi-update', [AcsBulkOperationController::class, 'wifiUpdate'])->name('wifi-update');
+        Route::post('apply-template', [AcsBulkOperationController::class, 'applyTemplate'])->name('apply-template');
+
+        // Bulk operation details
+        Route::get('{bulkOperation}', [AcsBulkOperationController::class, 'show'])->name('show');
+        Route::post('{bulkOperation}/retry', [AcsBulkOperationController::class, 'retry'])->name('retry');
+        Route::delete('{bulkOperation}/cancel', [AcsBulkOperationController::class, 'cancel'])->name('cancel');
+    });
+
+    // ===== CONFIG TEMPLATES =====
+    Route::prefix('templates')->name('templates.')->group(function () {
+        Route::get('/', [AcsTemplateController::class, 'index'])->name('index');
+        Route::get('create', [AcsTemplateController::class, 'create'])->name('create');
+        Route::post('/', [AcsTemplateController::class, 'store'])->name('store');
+        Route::get('{template}', [AcsTemplateController::class, 'show'])->name('show');
+        Route::get('{template}/edit', [AcsTemplateController::class, 'edit'])->name('edit');
+        Route::put('{template}', [AcsTemplateController::class, 'update'])->name('update');
+        Route::delete('{template}', [AcsTemplateController::class, 'destroy'])->name('destroy');
+
+        // Template actions
+        Route::post('{template}/duplicate', [AcsTemplateController::class, 'duplicate'])->name('duplicate');
+        Route::post('{template}/set-default', [AcsTemplateController::class, 'setDefault'])->name('set-default');
+        Route::post('{template}/apply', [AcsTemplateController::class, 'apply'])->name('apply');
+        Route::post('{template}/bulk-apply', [AcsTemplateController::class, 'bulkApply'])->name('bulk-apply');
+    });
+
+    // ===== ALERTS & MONITORING =====
+    Route::prefix('alerts')->name('alerts.')->group(function () {
+        Route::get('/', [AcsAlertController::class, 'index'])->name('index');
+        Route::get('{alert}', [AcsAlertController::class, 'show'])->name('show');
+        Route::post('{alert}/acknowledge', [AcsAlertController::class, 'acknowledge'])->name('acknowledge');
+        Route::post('{alert}/resolve', [AcsAlertController::class, 'resolve'])->name('resolve');
+        Route::delete('{alert}', [AcsAlertController::class, 'destroy'])->name('destroy');
+
+        // Bulk alert actions
+        Route::post('bulk-acknowledge', [AcsAlertController::class, 'bulkAcknowledge'])->name('bulk-acknowledge');
+        Route::post('bulk-resolve', [AcsAlertController::class, 'bulkResolve'])->name('bulk-resolve');
+    });
+
+    // ===== ALERT RULES =====
+    Route::prefix('alert-rules')->name('alert-rules.')->group(function () {
+        Route::get('/', [AcsAlertController::class, 'rules'])->name('index');
+        Route::get('create', [AcsAlertController::class, 'createRule'])->name('create');
+        Route::post('/', [AcsAlertController::class, 'storeRule'])->name('store');
+        Route::get('{rule}', [AcsAlertController::class, 'showRule'])->name('show');
+        Route::get('{rule}/edit', [AcsAlertController::class, 'editRule'])->name('edit');
+        Route::put('{rule}', [AcsAlertController::class, 'updateRule'])->name('update');
+        Route::delete('{rule}', [AcsAlertController::class, 'destroyRule'])->name('destroy');
+        Route::post('{rule}/toggle', [AcsAlertController::class, 'toggleRule'])->name('toggle');
+    });
+
+    // ===== PROVISIONING QUEUE =====
+    Route::prefix('provisioning')->name('provisioning.')->group(function () {
+        Route::get('queue', [AcsProvisioningController::class, 'queue'])->name('queue');
+        Route::post('process', [AcsProvisioningController::class, 'process'])->name('process');
+        Route::post('{queue}/retry', [AcsProvisioningController::class, 'retry'])->name('retry');
+        Route::delete('{queue}/cancel', [AcsProvisioningController::class, 'cancel'])->name('cancel');
+        Route::post('clear-failed', [AcsProvisioningController::class, 'clearFailed'])->name('clear-failed');
+    });
+
+    // ===== STATISTICS & REPORTS =====
+    Route::get('statistics', [AcsManagementController::class, 'statistics'])->name('statistics');
+    Route::get('reports/device-status', [AcsManagementController::class, 'deviceStatusReport'])->name('reports.device-status');
+    Route::get('reports/signal-quality', [AcsManagementController::class, 'signalQualityReport'])->name('reports.signal-quality');
+    Route::get('reports/provisioning', [AcsManagementController::class, 'provisioningReport'])->name('reports.provisioning');
+
+    // ===== API ENDPOINTS (AJAX) =====
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('device-status/{ont}', [AcsManagementController::class, 'deviceStatus'])->name('device-status');
+        Route::get('device-parameters/{ont}', [AcsManagementController::class, 'deviceParameters'])->name('device-parameters');
+        Route::get('bulk-operation-progress/{bulkOperation}', [AcsBulkOperationController::class, 'progress'])->name('bulk-operation-progress');
+        Route::get('provisioning-queue-status', [AcsProvisioningController::class, 'queueStatus'])->name('provisioning-queue-status');
+        Route::get('alerts-count', [AcsAlertController::class, 'alertsCount'])->name('alerts-count');
+        Route::get('devices-stats', [AcsManagementController::class, 'devicesStats'])->name('devices-stats');
+    });
+});
 
     // ==================== NETWORK INFRASTRUCTURE ====================
 
@@ -147,6 +260,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('onts/{ont}/reboot', [ONTController::class, 'reboot'])->name('onts.reboot');
     Route::get('onts/{ont}/status', [ONTController::class, 'getStatus'])->name('onts.status');
     Route::post('onts/{ont}/ping', [ONTController::class, 'ping'])->name('onts.ping');
+
+    Route::post('{ont}/acs-enroll', [ONTController::class, 'enrollToAcs'])->name('acs-enroll');
+    Route::post('{ont}/acs-provision', [ONTController::class, 'acsProvision'])->name('acs-provision');
+    Route::get('{ont}/acs-view', function(ONT $ont) {return redirect()->route('acs.show', $ont);})->name('acs-view');
 
     // ==================== FIBER INFRASTRUCTURE ====================
 

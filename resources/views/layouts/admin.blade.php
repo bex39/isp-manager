@@ -191,6 +191,70 @@
                 </a>
             </div>
 
+            <div class="menu-item" style="cursor: pointer;" onclick="toggleSubmenu('acsMenu')">
+                <i class="bi bi-sliders"></i>
+                <span>ACS Management</span>
+                @php
+                    $alertCount = \App\Models\AcsAlert::where('status', 'new')->count();
+                @endphp
+                @if($alertCount > 0)
+                    <span class="badge bg-danger">{{ $alertCount }}</span>
+                @endif
+                <i class="bi bi-chevron-down ms-auto" id="acsMenuChevron"></i>
+            </div>
+
+            <div id="acsMenuSubmenu" style="display: {{ request()->routeIs('acs.*') ? 'block' : 'none' }}; padding-left: 1rem;">
+                <a href="{{ route('acs.index') }}" class="menu-item {{ request()->routeIs('acs.index') ? 'active' : '' }}">
+                    <i class="bi bi-hdd-network"></i>
+                    <span>Devices</span>
+                </a>
+
+                <a href="{{ route('acs.templates.index') }}" class="menu-item {{ request()->routeIs('acs.templates.*') ? 'active' : '' }}">
+                    <i class="bi bi-file-text"></i>
+                    <span>Templates</span>
+                </a>
+
+                <a href="{{ route('acs.bulk.index') }}" class="menu-item {{ request()->routeIs('acs.bulk.*') ? 'active' : '' }}">
+                    <i class="bi bi-stack"></i>
+                    <span>Bulk Operations</span>
+                </a>
+
+                <a href="{{ route('acs.alerts.index') }}" class="menu-item {{ request()->routeIs('acs.alerts.*') ? 'active' : '' }}">
+                    <i class="bi bi-bell"></i>
+                    <span>Alerts</span>
+                    @if($alertCount > 0)
+                        <span class="badge bg-danger ms-2">{{ $alertCount }}</span>
+                    @endif
+                </a>
+
+                <a href="{{ route('acs.alert-rules.index') }}" class="menu-item {{ request()->routeIs('acs.alert-rules.*') ? 'active' : '' }}">
+                    <i class="bi bi-gear"></i>
+                    <span>Alert Rules</span>
+                </a>
+
+                <a href="{{ route('acs.provisioning.queue') }}" class="menu-item {{ request()->routeIs('acs.provisioning.*') ? 'active' : '' }}">
+                    <i class="bi bi-hourglass-split"></i>
+                    <span>Provisioning Queue</span>
+                    @php
+                        $queueCount = \App\Models\AcsProvisioningQueue::where('status', 'pending')->count();
+                    @endphp
+                    @if($queueCount > 0)
+                        <span class="badge bg-info ms-2">{{ $queueCount }}</span>
+                    @endif
+                </a>
+
+                <a href="{{ route('acs.statistics') }}" class="menu-item {{ request()->routeIs('acs.statistics') ? 'active' : '' }}">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Statistics</span>
+                </a>
+
+                <a href="{{ route('acs.unprovisioned') }}" class="menu-item {{ request()->routeIs('acs.unprovisioned') ? 'active' : '' }}">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>Unprovisioned</span>
+                </a>
+            </div>
+
+
             <!-- ✅ NEW: Network Topology -->
             <a href="{{ route('network.topology') }}" class="menu-item {{ request()->routeIs('network.topology') ? 'active' : '' }}">
                 <i class="bi bi-diagram-3"></i>
