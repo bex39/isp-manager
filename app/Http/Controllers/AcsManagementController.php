@@ -469,48 +469,93 @@ class AcsManagementController extends Controller
     /**
      * Statistics dashboard
      */
-    public function statistics()
-    {
-        $stats = [
-            'devices' => [
-                'total' => ONT::count(),
-                'online' => ONT::where('status', 'online')->count(),
-                'offline' => ONT::where('status', 'offline')->count(),
-                'los' => ONT::where('status', 'los')->count(),
-            ],
-            'acs' => [
-                'managed' => ONT::whereHas('session')->count(),
-                'unmanaged' => ONT::whereDoesntHave('session')->count(),
-                'auto_provision_enabled' => ONT::where('auto_provision_enabled', true)->count(),
-            ],
-            'signal' => [
-                'excellent' => ONT::where('rx_power', '>=', -20)->count(),
-                'good' => ONT::whereBetween('rx_power', [-23, -20])->count(),
-                'fair' => ONT::whereBetween('rx_power', [-25, -23])->count(),
-                'poor' => ONT::where('rx_power', '<', -25)->count(),
-            ],
-            'provisioning' => [
-                'total' => AcsConfigHistory::count(),
-                'today' => AcsConfigHistory::whereDate('created_at', today())->count(),
-                'success' => AcsConfigHistory::where('status', 'success')->count(),
-                'failed' => AcsConfigHistory::where('status', 'failed')->count(),
-            ],
-            'alerts' => [
-                'total' => AcsAlert::count(),
-                'new' => AcsAlert::where('status', 'new')->count(),
-                'acknowledged' => AcsAlert::where('status', 'acknowledged')->count(),
-                'critical' => AcsAlert::where('severity', 'critical')->whereIn('status', ['new', 'acknowledged'])->count(),
-            ],
-        ];
+    /**
+ * Statistics dashboard
+ */
+public function statistics()
+{
+    // Check if ACS tables exist
+    $hasAcsTables = Schema::hasTable('acs_config_histories')
+        && Schema::hasTable('acs_alerts');
 
-        // Recent activities
-        $recentActivities = AcsConfigHistory::with(['ont', 'executor'])
-            ->latest()
-            ->take(20)
-            ->get();
-
-        return view('acs.statistics', compact('stats', 'recentActivities'));
+    if (!$hasAcsTables) {
+        return view('acs.statistics', [
+            'stats' => [
+                'devices' => [
+                    'total' => ONT::count(),
+                    'online' => ONT::where('status', 'online')->count(),
+                    'offline' => ONT::where('status', 'offline')->count(),
+                    'los' => ONT::where('status', 'los')->count(),
+                ],
+                'acs' => [
+                    'managed' => 0,
+                    'unmanaged' => ONT::count(),
+                    'auto_provision_enabled' => 0,
+                ],
+                'signal' => [
+                    'excellent' => ONT::where('rx_power', '>=', -20)->count(),
+                    'good' => ONT::whereBetween('rx_power', [-23, -20])->count(),
+                    'fair' => ONT::whereBetween('rx_power', [-25, -23])->count(),
+                    'poor' => ONT::where('rx_power', '<', -25)->count(),
+                ],
+                'provisioning' => [
+                    'total' => 0,
+                    'today' => 0,
+                    'success' => 0,
+                    'failed' => 0,
+                ],
+                'alerts' => [
+                    'total' => 0,
+                    'new' => 0,
+                    'acknowledged' => 0,
+                    'critical' => 0,
+                ],
+            ],
+            'recentActivities' => collect(),
+        ]);
     }
+
+    // Original code with tables existing
+    $stats = [
+        'devices' => [
+            'total' => ONT::count(),
+            'online' => ONT::where('status', 'online')->count(),
+            'offline' => ONT::where('status', 'offline')->count(),
+            'los' => ONT::where('status', 'los')->count(),
+        ],
+        'acs' => [
+            'managed' => ONT::whereHas('session')->count(),
+            'unmanaged' => ONT::whereDoesntHave('session')->count(),
+            'auto_provision_enabled' => ONT::where('auto_provision_enabled', true)->count(),
+        ],
+        'signal' => [
+            'excellent' => ONT::where('rx_power', '>=', -20)->count(),
+            'good' => ONT::whereBetween('rx_power', [-23, -20])->count(),
+            'fair' => ONT::whereBetween('rx_power', [-25, -23])->count(),
+            'poor' => ONT::where('rx_power', '<', -25)->count(),
+        ],
+        'provisioning' => [
+            'total' => AcsConfigHistory::count(),
+            'today' => AcsConfigHistory::whereDate('created_at', today())->count(),
+            'success' => AcsConfigHistory::where('status', 'success')->count(),
+            'failed' => AcsConfigHistory::where('status', 'failed')->count(),
+        ],
+        'alerts' => [
+            'total' => AcsAlert::count(),
+            'new' => AcsAlert::where('status', 'new')->count(),
+            'acknowledged' => AcsAlert::where('status', 'acknowledged')->count(),
+            'critical' => AcsAlert::where('severity', 'critical')->whereIn('status', ['new', 'acknowledged'])->count(),
+        ],
+    ];
+
+    // Recent activities
+    $recentActivities = AcsConfigHistory::with(['ont', 'executor'])
+        ->latest()
+        ->take(20)
+        ->get();
+
+    return view('acs.statistics', compact('stats', 'recentActivities'));
+}
 
     /**
      * API: Get device status (for AJAX)
