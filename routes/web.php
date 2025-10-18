@@ -310,9 +310,10 @@ Route::prefix('acs')->name('acs.')->middleware(['auth'])->group(function () {
 
     // Switch Management
     Route::resource('switches', SwitchController::class);
+    Route::post('switches/{switch}/check-status', [SwitchController::class, 'checkStatus'])->name('switches.check-status');
+    Route::post('switches/check-all-status', [SwitchController::class, 'checkAllStatus'])->name('switches.check-all-status');
     Route::get('switches/{switch}/ssh-terminal', [SwitchController::class, 'sshTerminal'])->name('switches.ssh-terminal');
     Route::post('switches/{switch}/ssh-command', [SwitchController::class, 'executeSSH'])->name('switches.ssh-command');
-    Route::post('switches/{switch}/ping', [SwitchController::class, 'ping'])->name('switches.ping');
 
     // Access Point Management
     Route::resource('access-points', AccessPointController::class);
